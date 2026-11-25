@@ -1,0 +1,98 @@
+name: cypherdoc
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cypherdoc
+      POSTGRES_DB: cypherdoc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cypherdoc -d cypherdoc"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal]
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    security_opt: ["no-new-privileges:true"]
+    # `edge` gives Ollama outbound internet to download models; nothing is published.
+    networks: [internal, edge]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHAT_MODEL: ${CHAT_MODEL:-llama3.2:3b}
+      EMBED_MODEL: ${EMBED_MODEL:-nomic-embed-text}
+    entrypoint: ["/bin/sh", "-c", "ollama pull \"$$CHAT_MODEL\" && ollama pull \"$$EMBED_MODEL\" && echo models ready"]
+    restart: "no"
+    networks: [internal]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://cypherdoc:${POSTGRES_PASSWORD:-change-me-local-only}@db:5432/cypherdoc?sslmode=disable
+      OLLAMA_URL: http://ollama:11434
+      CHAT_MODEL: ${CHAT_MODEL:-llama3.2:3b}
+      EMBED_MODEL: ${EMBED_MODEL:-nomic-embed-text}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-true}
+      RICH_BLOCKS: ${RICH_BLOCKS:-true}
+    healthcheck:
+      test: ["CMD", "/app/cypherdoc", "-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal, edge]
+
+networks:
+  internal:
+    internal: true   # no route to the internet or the host
+  edge: {}
+
+volumes:
+  pgdata:
+  ollama:
