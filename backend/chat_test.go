@@ -65,3 +65,11 @@ func TestNormModel(t *testing.T) {
 		t.Fatal("normModel mismatch")
 	}
 }
+
+func TestWantsVisual(t *testing.T) {
+	for q, want := range map[string]bool{"build a chart of topics": true, "Show a table": true, "Visualize growth": true, "What is a handler?": false} {
+		if got := wantsVisual(q); got != want {
+			t.Errorf("wantsVisual(%q) = %v want %v", q, got, want)
+		}
+	}
+}

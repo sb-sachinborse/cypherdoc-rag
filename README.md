@@ -1,6 +1,6 @@
 # CypherDoc
 
-Chat with your own documents. Upload PDF, DOCX, TXT or Markdown files and ask questions; answers are generated locally by Ollama from your documents only, with page-level citations and, for numeric questions, stat cards, tables and charts.
+Chat with your own documents. Upload PDF, Word, Excel (.xlsx), CSV, TXT or Markdown files and ask questions; answers are generated locally by Ollama from your documents only, with page-level citations and, for numeric questions, stat cards, tables and charts.
 
 **Stack:** Go (backend) · Vue 3 (frontend, served by nginx) · Postgres + pgvector · Ollama · Docker Compose.
 
@@ -36,6 +36,21 @@ Question -> embed -> top-5 chunks for THIS user -> llama3.2 streams an answer us
 
 If the best match is too distant (`MAX_DISTANCE`, default 0.75) the app answers that it could not find the topic instead of guessing.
 
+## Spreadsheets and analytics
+
+`.xlsx` and `.csv` files are stored two ways:
+
+1. as searchable text (so "what does this sheet contain?" works), and
+2. as real rows in Postgres (`datasets` table), up to 50,000 rows and 60 columns per sheet, 10 sheets per workbook.
+
+For analytical questions (sum, average, count, top N, by month, compare, chart...) the model only **plans** a query: which column, which aggregation, which grouping or filter. The Go backend validates that plan against the real column names and runs it over all rows, so totals and averages are exact, never guessed. Results appear as stat cards, a table and a bar, line or pie chart, followed by a short written summary.
+
+Examples: "total revenue by region", "average salary per department", "top 5 products by units sold", "show a pie chart of expenses by category", "revenue trend over time".
+
+Limits: legacy `.xls` is not supported (save as `.xlsx`); formulas are read as their last calculated value; the first non-empty row is treated as the header.
+
+For text documents (PDF, DOCX, MD), charts are built from the table in the model's own answer and kept only if every number appears in the retrieved text.
+
 ## Security
 
 - Passwords hashed with bcrypt (cost 12); 10 to 72 characters; constant-time-ish login for unknown emails.
@@ -68,6 +83,7 @@ If the best match is too distant (`MAX_DISTANCE`, default 0.75) the app answers 
 ## Known limits
 
 - Scanned PDFs (images of text) are not supported; there is no OCR.
+- Legacy `.xls` files are not supported; use `.xlsx` or `.csv`.
 - Small local models can still get things wrong, so check the cited sources.
 - Retrieval is an exact scan per user (no ANN index), which is accurate and fine for thousands of chunks per user.
 - Chat history lives in the browser tab only.

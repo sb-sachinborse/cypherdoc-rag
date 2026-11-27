@@ -18,10 +18,10 @@ const (
 	maxPDFPages    = 500
 	maxTextChars   = 8_000_000
 	maxXMLBytes    = 50 << 20
-	allowedExtList = ".pdf, .txt, .md, .docx"
+	allowedExtList = ".pdf, .docx, .xlsx, .csv, .txt, .md"
 )
 
-var allowedExt = map[string]bool{".pdf": true, ".txt": true, ".md": true, ".docx": true}
+var allowedExt = map[string]bool{".pdf": true, ".txt": true, ".md": true, ".docx": true, ".xlsx": true, ".csv": true}
 
 // cleanFilename keeps only the base name and removes control characters.
 func cleanFilename(name string) string {
@@ -50,11 +50,11 @@ func validateContent(ext string, data []byte) error {
 		if !bytes.HasPrefix(data, []byte("%PDF-")) {
 			return errors.New("not a PDF")
 		}
-	case ".docx":
+	case ".docx", ".xlsx":
 		if !bytes.HasPrefix(data, []byte("PK\x03\x04")) {
-			return errors.New("not a DOCX")
+			return errors.New("not an Office document")
 		}
-	case ".txt", ".md":
+	case ".txt", ".md", ".csv":
 		if bytes.IndexByte(data, 0) >= 0 || !utf8.Valid(data) {
 			return errors.New("not UTF-8 text")
 		}

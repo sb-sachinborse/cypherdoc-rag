@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -236,7 +237,17 @@ func (s *Server) waitForModels(ctx context.Context) error {
 }
 
 func (s *Server) ingest(ctx context.Context, j ingestJob) error {
-	pages, err := extractText(j.Ext, j.Data)
+	var pages []Page
+	var sheets []Sheet
+	var err error
+	if isSheetExt(j.Ext) {
+		sheets, err = parseSpreadsheet(j.Ext, j.Data)
+		if err == nil {
+			pages = sheetPages(sheets)
+		}
+	} else {
+		pages, err = extractText(j.Ext, j.Data)
+	}
 	if err != nil {
 		return &userError{"Could not read this file.", err}
 	}
@@ -275,6 +286,21 @@ func (s *Server) ingest(ctx context.Context, j ingestJob) error {
 		if _, err := tx.Exec(ctx,
 			`INSERT INTO chunks(document_id, user_id, page, idx, content, embedding) VALUES($1,$2,$3,$4,$5,$6::text::vector)`,
 			j.DocID, j.UserID, c.Page, i, c.Text, vecString(vectors[i])); err != nil {
+			return err
+		}
+	}
+	for _, sh := range sheets {
+		colsJSON, _ := json.Marshal(sh.Columns)
+		bodyJSON, _ := json.Marshal(sh.Rows)
+		sample := sh.Rows
+		if len(sample) > 3 {
+			sample = sample[:3]
+		}
+		sampleJSON, _ := json.Marshal(sample)
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO datasets(document_id, user_id, sheet_name, cols, n_rows, sample, body)
+			 VALUES($1,$2,$3,$4::text::jsonb,$5,$6::text::jsonb,$7::text::jsonb)`,
+			j.DocID, j.UserID, sh.Name, string(colsJSON), len(sh.Rows), string(sampleJSON), string(bodyJSON)); err != nil {
 			return err
 		}
 	}

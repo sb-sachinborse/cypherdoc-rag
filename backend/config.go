@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/url"
 	"os"
 	"strconv"
 )
@@ -55,10 +56,27 @@ func envInt(key string, def int) int {
 	return def
 }
 
+// databaseURL builds the connection string from separate parts so that special
+// characters in the password (@ : / # % ...) are escaped correctly.
+// DATABASE_URL, if set, wins.
+func databaseURL() string {
+	if u := os.Getenv("DATABASE_URL"); u != "" {
+		return u
+	}
+	u := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(env("DB_USER", "cypherdoc"), env("POSTGRES_PASSWORD", "change-me-local-only")),
+		Host:     env("DB_HOST", "db") + ":" + env("DB_PORT", "5432"),
+		Path:     "/" + env("DB_NAME", "cypherdoc"),
+		RawQuery: "sslmode=disable",
+	}
+	return u.String()
+}
+
 func loadConfig() Config {
 	return Config{
 		Port:           env("PORT", "8080"),
-		DatabaseURL:    env("DATABASE_URL", "postgres://cypherdoc:change-me-local-only@db:5432/cypherdoc?sslmode=disable"),
+		DatabaseURL:    databaseURL(),
 		OllamaURL:      env("OLLAMA_URL", "http://ollama:11434"),
 		ChatModel:      env("CHAT_MODEL", "llama3.2:3b"),
 		EmbedModel:     env("EMBED_MODEL", "nomic-embed-text"),
@@ -67,7 +85,7 @@ func loadConfig() Config {
 		RichBlocks:     envBool("RICH_BLOCKS", true),
 		MaxUploadBytes: int64(envInt("MAX_UPLOAD_MB", 10)) << 20,
 		MaxDistance:    envFloat("MAX_DISTANCE", 0.75),
-		TopK:           envInt("TOP_K", 5),
+		TopK:           envInt("TOP_K", 8),
 		MaxDocsPerUser: envInt("MAX_DOCS_PER_USER", 100),
 	}
 }

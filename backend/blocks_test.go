@@ -19,7 +19,7 @@ func TestValidateBlocksDropsInventedNumbers(t *testing.T) {
 		}},
 		Chart: &Chart{Title: "x", Labels: []string{"Q1", "Q2"}, Series: []Series{{Name: "Revenue", Values: []float64{1.39, 1.62}}}},
 	}
-	out := validateBlocks(in, sampleCtx)
+	out := validateBlocks(in, sampleCtx, false)
 	if len(out.Stats) != 1 || out.Stats[0].Value != "$1.62M" {
 		t.Fatalf("stats: %+v", out.Stats)
 	}
@@ -36,11 +36,11 @@ func TestValidateBlocksDropsInventedNumbers(t *testing.T) {
 
 func TestValidateBlocksRejectsBadChart(t *testing.T) {
 	in := Blocks{Chart: &Chart{Labels: []string{"Q1", "Q2"}, Series: []Series{{Name: "A", Values: []float64{1.39, 42}}}}}
-	if out := validateBlocks(in, sampleCtx); out.Chart != nil {
+	if out := validateBlocks(in, sampleCtx, false); out.Chart != nil {
 		t.Fatalf("chart with an unseen value must be dropped: %+v", out.Chart)
 	}
 	in = Blocks{Chart: &Chart{Labels: []string{"Q1", "Q2"}, Series: []Series{{Name: "A", Values: []float64{1.39}}}}}
-	if out := validateBlocks(in, sampleCtx); out.Chart != nil {
+	if out := validateBlocks(in, sampleCtx, false); out.Chart != nil {
 		t.Fatal("series length mismatch must be dropped")
 	}
 }
@@ -59,5 +59,21 @@ func TestParseBlocks(t *testing.T) {
 	b, ok := parseBlocks(`{"stats":[{"label":"A","value":"1"}]}`)
 	if !ok || len(b.Stats) != 1 {
 		t.Fatalf("got %+v %v", b, ok)
+	}
+}
+
+func TestLenientModeAllowsCountsAndFlagsThem(t *testing.T) {
+	in := Blocks{Chart: &Chart{Title: "Topics", Labels: []string{"Ansible", "GCP"}, Series: []Series{{Name: "Questions", Values: []float64{12, 7}}}}}
+	strict := validateBlocks(in, "no numbers here", false)
+	if strict.Chart != nil {
+		t.Fatal("strict mode must drop counts that are not in the text")
+	}
+	lenient := validateBlocks(in, "no numbers here", true)
+	if lenient.Chart == nil || !lenient.Derived {
+		t.Fatalf("lenient mode should keep counts and flag them: %+v", lenient)
+	}
+	big := Blocks{Stats: []Stat{{Label: "Revenue", Value: "$9,999,999"}}}
+	if out := validateBlocks(big, "nothing", true); len(out.Stats) != 0 {
+		t.Fatal("large invented figures must still be dropped in lenient mode")
 	}
 }

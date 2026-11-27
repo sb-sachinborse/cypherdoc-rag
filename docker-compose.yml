@@ -56,13 +56,17 @@ services:
       ollama:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://cypherdoc:${POSTGRES_PASSWORD:-change-me-local-only}@db:5432/cypherdoc?sslmode=disable
+      DB_HOST: db
+      DB_USER: cypherdoc
+      DB_NAME: cypherdoc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
       OLLAMA_URL: http://ollama:11434
       CHAT_MODEL: ${CHAT_MODEL:-llama3.2:3b}
       EMBED_MODEL: ${EMBED_MODEL:-nomic-embed-text}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOW_SIGNUP: ${ALLOW_SIGNUP:-true}
       RICH_BLOCKS: ${RICH_BLOCKS:-true}
+      TOP_K: ${TOP_K:-8}
     healthcheck:
       test: ["CMD", "/app/cypherdoc", "-healthcheck"]
       interval: 10s

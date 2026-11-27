@@ -49,3 +49,5 @@ button { cursor: pointer; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
 .logo-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 640px) { .input { font-size: 16px; } }

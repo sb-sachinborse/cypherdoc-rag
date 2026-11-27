@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { auth } from '../store'
 import RagAnimation from '../components/RagAnimation.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
+import Logo from '../components/Logo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +36,7 @@ async function submit() {
     <main class="right">
       <div class="theme"><ThemeToggle /></div>
       <form class="form" @submit.prevent="submit">
+        <div class="mlogo"><Logo /></div>
         <div>
           <h2>{{ isRegister ? 'Create your account' : 'Welcome back' }}</h2>
           <p class="muted">{{ isRegister ? 'Start asking your documents questions.' : 'Log in to your CypherDoc workspace.' }}</p>
@@ -69,5 +71,7 @@ label { font-size: 13px; color: var(--text-2); }
 .error { color: var(--err); background: var(--err-bg); padding: 10px 12px; border-radius: 8px; font-size: 13px; }
 .center { text-align: center; font-size: 13px; }
 .link { color: var(--accent-text); }
-@media (max-width: 960px) { .left { display: none; } .right { width: 100%; } }
+.mlogo { display: none; }
+@media (max-width: 960px) { .left { display: none; } .right { width: 100%; } .mlogo { display: block; } }
+@media (max-width: 520px) { .right { padding: 72px 20px 32px; align-items: start; } h2 { font-size: 24px; } .input { font-size: 16px; } }
 </style>

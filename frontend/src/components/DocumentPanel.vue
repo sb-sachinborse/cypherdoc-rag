@@ -19,9 +19,9 @@ const tone = { indexed: 'ok', processing: 'warn', failed: 'err' }
   <section class="panel">
     <h2>Knowledge</h2>
     <button type="button" class="drop" :class="{ on: dragging }" @click="input.click()" @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="onDrop">
-      Click to upload or drag and drop<br /><small class="muted">PDF, TXT, MD or DOCX (max 10 MB)</small>
+      Click to upload or drag and drop<br /><small class="muted">PDF, DOCX, XLSX, CSV, TXT or MD (max 10 MB)</small>
     </button>
-    <input ref="input" class="sr-only" type="file" multiple accept=".pdf,.txt,.md,.docx" tabindex="-1" aria-label="Upload documents" @change="onChange" />
+    <input ref="input" class="sr-only" type="file" multiple accept=".pdf,.txt,.md,.docx,.xlsx,.csv" tabindex="-1" aria-label="Upload documents" @change="onChange" />
     <label class="coll"><span class="muted">Add to collection</span>
       <input v-model="target" class="input small" maxlength="60" :placeholder="effective" />
     </label>
@@ -41,13 +41,17 @@ const tone = { indexed: 'ok', processing: 'warn', failed: 'err' }
 </template>
 
 <style scoped>
-.panel { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; }
+.panel { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; flex: 1; overflow: hidden; }
 h2 { font-size: 15px; }
 .drop { border: 1.5px dashed var(--border-strong); background: transparent; border-radius: 12px; padding: 22px 12px; color: var(--text-2); line-height: 1.6; }
 .drop:hover, .drop.on { border-color: var(--accent); background: var(--chip); }
 .coll { display: flex; flex-direction: column; gap: 6px; font-size: 12px; } .small { height: 36px; }
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+.list { flex: 1; min-height: 0; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
 .item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
 .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; } .meta strong { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .errtext { color: var(--err); } .empty { padding: 12px 4px; }
+</style>
+
+<style>
+@media (max-width: 640px) { .panel .input { font-size: 16px; } }
 </style>

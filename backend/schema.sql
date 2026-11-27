@@ -40,3 +40,16 @@ CREATE TABLE IF NOT EXISTS chunks (
 );
 CREATE INDEX IF NOT EXISTS chunks_doc_idx ON chunks (document_id);
 CREATE INDEX IF NOT EXISTS chunks_user_idx ON chunks (user_id);
+
+-- Spreadsheet data kept as rows so numbers can be summed exactly, not guessed by the model.
+CREATE TABLE IF NOT EXISTS datasets (
+  id          BIGSERIAL PRIMARY KEY,
+  document_id BIGINT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  user_id     BIGINT NOT NULL,
+  sheet_name  TEXT NOT NULL,
+  cols        JSONB NOT NULL,
+  n_rows      INT NOT NULL,
+  sample      JSONB NOT NULL,
+  body        JSONB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS datasets_user_idx ON datasets (user_id);

@@ -72,4 +72,16 @@ h1 { font-size: clamp(36px, 6vw, 58px); line-height: 1.08; letter-spacing: -0.02
 .stack { margin-top: 64px; text-align: center; } .label { display: block; font-size: 12px; letter-spacing: 0.08em; margin-bottom: 14px; }
 .pill { display: inline-block; margin: 4px; padding: 8px 18px; border: 1px solid var(--border); border-radius: 99px; }
 .footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 13px; }
+@media (max-width: 520px) {
+  .page { padding: 0 16px 16px; }
+  .nav { padding: 14px 0; }
+  .actions { gap: 8px; }
+  .actions .btn:not(.primary) { display: none; }
+  .actions .btn { padding: 0 14px; }
+  .hero { padding: 36px 0 24px; }
+  .hero p { font-size: 16px; }
+  .preview { padding: 16px; }
+  .features { margin-top: 56px; } .features h2 { font-size: 26px; }
+  .footer { flex-direction: column; gap: 4px; }
+}
 </style>
